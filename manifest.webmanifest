@@ -1,0 +1,16 @@
+{
+  "name": "사자성어 퀴즈",
+  "short_name": "사자성어 퀴즈",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#EBEBD8",
+  "theme_color": "#EBEBD8",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

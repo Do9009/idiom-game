@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EBEBD8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="사자성어 퀴즈">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>사자성어 퀴즈</title>
+<style>
+:root{--bg:#EBEBD8;--green:#637545;--dark:#455230;--light:#9BA685}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--dark);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+button{font:inherit;cursor:pointer;border:0}
+button:focus-visible{outline:3px solid var(--dark);outline-offset:3px}
+#app{min-height:100svh;max-width:1100px;margin:auto;padding:clamp(14px,3vw,34px);display:flex;flex-direction:column}
+.page{display:none;flex:1;min-height:0}.page.active{display:flex;flex-direction:column}
+.btn{background:var(--green);color:var(--bg);border-radius:12px;padding:15px 20px;font-weight:750;transition:background .15s,transform .15s}
+.btn:hover{background:var(--dark)}.btn:active{transform:scale(.985)}
+.btn.secondary{background:var(--light);color:var(--dark)}.btn.secondary:hover{background:var(--green);color:var(--bg)}
+.btn.back{width:48px;height:44px;padding:0;font-size:26px}
+.home{justify-content:center;align-items:center;gap:18px;text-align:center}
+h1{font-size:clamp(27px,5vw,42px);margin:0 0 18px;line-height:1.35}
+.home-actions{width:min(100%,480px);display:grid;gap:13px}
+.home-actions .btn{min-height:72px;font-size:clamp(17px,2.5vw,22px)}
+.home-bottom{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:auto;padding-top:30px}
+.home-bottom .btn{min-width:88px;min-height:58px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.topbar .stats{font-weight:800;text-align:right;font-size:20px}
+.center-content{margin:auto;width:min(100%,720px);text-align:center;display:grid;gap:22px}
+.big-title{font-size:clamp(28px,4vw,40px);font-weight:800}
+input[type=range]{width:100%;accent-color:var(--green)}
+.range-value{font-size:34px;font-weight:800}
+.question{font-size:clamp(29px,5vw,52px);font-weight:800;text-align:center;display:grid;place-items:center;min-height:130px;line-height:1.4;overflow-wrap:anywhere}
+.choices{width:min(100%,850px);margin:auto;display:grid;gap:12px}
+.choice{min-height:clamp(74px,12vh,112px);padding:14px 22px;border-radius:14px;background:var(--light);color:var(--dark);font-weight:750;font-size:clamp(17px,2.4vw,22px);line-height:1.45;white-space:normal;overflow-wrap:anywhere}
+.choice.correct{background:var(--green);color:var(--bg)}.choice.wrong{background:var(--dark);color:var(--bg)}
+.result{margin:auto;text-align:center;display:grid;gap:18px;justify-items:center}
+.result-score{font-size:clamp(48px,9vw,72px);font-weight:850}
+.list{overflow:auto;display:grid;gap:12px;padding:4px 2px 20px}
+.word-card{background:var(--light);border-radius:12px;padding:17px 20px}
+.word-card strong{font-size:23px;display:block;margin-bottom:8px}.word-card p{margin:0;line-height:1.6;font-size:17px;overflow-wrap:anywhere}
+.game-head{display:grid;grid-template-columns:auto 1fr 1fr;align-items:center;gap:12px}
+.game-head .metric{font-size:22px;font-weight:850;text-align:center}
+.game-head .metric:last-child{text-align:right}
+.game-status{text-align:center;min-height:30px;font-size:18px;font-weight:750}
+.match-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0}
+.match-column{display:grid;grid-template-rows:auto repeat(5,minmax(80px,1fr));gap:10px;min-width:0}
+.column-title{text-align:center;font-size:21px;font-weight:850;padding:3px}
+.match-btn{background:var(--light);color:var(--dark);border-radius:12px;padding:10px;min-width:0;min-height:80px;font-weight:750;font-size:clamp(15px,2vw,20px);line-height:1.45;overflow-wrap:anywhere}
+.match-btn.selected{background:var(--dark);color:var(--bg)}
+.game-bottom{display:flex;justify-content:center;padding-top:14px}
+.delta{position:fixed;left:50%;top:90px;transform:translateX(-50%);font-size:22px;font-weight:900;pointer-events:none;opacity:0;z-index:20}
+.delta.show{animation:deltaFade 1.25s ease forwards}
+@keyframes deltaFade{0%{opacity:0;transform:translate(-50%,8px)}20%{opacity:1;transform:translate(-50%,0)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px)}}
+.overlay{position:fixed;inset:0;background:rgba(235,235,216,.94);display:none;align-items:center;justify-content:center;font-size:clamp(64px,15vw,110px);font-weight:900;z-index:10}
+.overlay.show{display:flex}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--dark);color:var(--bg);padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media(max-width:600px){
+ #app{padding:14px;padding-bottom:max(14px,env(safe-area-inset-bottom))}
+ .home-actions .btn{min-height:66px}
+ .game-head .metric{font-size:18px}
+ .match-columns{gap:8px}
+ .match-column{gap:8px;grid-template-rows:auto repeat(5,minmax(75px,1fr))}
+ .match-btn{padding:8px;font-size:14px;border-radius:9px}
+ .column-title{font-size:17px}
+ .topbar{margin-bottom:12px}
+ .choices{gap:10px}
+ .choice{min-height:76px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<section id="home" class="page home active">
+  <h1>먼가 작구 귀찮게<br>외워야 하는 녀석</h1>
+  <div class="home-actions">
+    <button class="btn" data-action="quiz-meaning">사자성어 보고 뜻 맞추기</button>
+    <button class="btn" data-action="quiz-idiom">뜻 보고 사자성어 맞추기</button>
+    <button class="btn" data-action="matching">사자성어 짝 맞추기</button>
+  </div>
+  <div class="home-bottom">
+    <button id="summaryToggle" class="btn secondary">요약</button>
+    <button class="btn" data-action="vocabulary" aria-label="사자성어 목록">＋</button>
+  </div>
+</section>
+<section id="setup" class="page">
+ <div class="topbar"><button class="btn back" data-action="home">←</button><div></div></div>
+ <div class="center-content">
+  <div class="big-title">문제 개수 설정</div>
+  <div id="rangeValue" class="range-value">10개</div>
+  <input id="questionRange" type="range" min="1" max="53" value="10">
+  <div style="display:flex;justify-content:space-between"><span>1개</span><span id="maxQuestions">53개</span></div>
+  <button class="btn" id="startQuiz">시작하기</button>
+ </div>
+</section>
+<section id="quiz" class="page">
+ <div class="topbar"><button class="btn back" data-action="home">←</button><div class="stats"><div id="progress">0 / 10</div><div id="correctCount" style="font-size:16px">0 / 10</div></div></div>
+ <div id="question" class="question"></div>
+ <div id="choices" class="choices"></div>
+</section>
+<section id="result" class="page">
+ <div class="topbar"><button class="btn back" data-action="home">←</button></div>
+ <div class="result">
+  <div class="big-title">퀴즈 완료!</div>
+  <div id="resultScore" class="result-score">0 / 0</div>
+  <button id="retryWrong" class="btn">틀린 문제 다시풀기</button>
+  <button class="btn" data-action="setup">다시하기</button>
+ </div>
+</section>
+<section id="vocabulary" class="page">
+ <div class="topbar"><button class="btn back" data-action="home">←</button><div class="big-title">사자성어 목록</div><div style="width:48px"></div></div>
+ <div id="wordList" class="list"></div>
+</section>
+<section id="matching" class="page">
+ <div class="game-head">
+  <button class="btn back" data-action="leave-game">←</button>
+  <div class="metric">남은 시간<br><span id="time">60</span></div>
+  <div class="metric">점수<br><span id="score">0</span>점</div>
+ </div>
+ <div id="gameStatus" class="game-status"></div>
+ <div class="match-columns">
+  <div class="match-column"><div class="column-title">사자성어</div><div id="idiomChoices" style="display:contents"></div></div>
+  <div class="match-column"><div class="column-title">뜻풀이</div><div id="meaningChoices" style="display:contents"></div></div>
+ </div>
+ <div class="game-bottom"><button id="restartGame" class="btn" hidden>다시하기</button></div>
+</section>
+</div>
+<div id="countOverlay" class="overlay">3</div>
+<div id="scoreDelta" class="delta"></div>
+<div id="toast" class="toast"></div>
+<script>
+const WORDS = [["가렴주구", "세금을 가혹하게 거두어들이고, 무리하게 재물을 빼앗음."], ["각골통한", "뼈에 사무칠 만큼 원통하고 한스러움. 또는 그런 일."], ["감탄고토", "달면 삼키고 쓰면 뱉는다는 뜻으로, 사리의 옳고 그름에 관계없이 제 비위에 맞으면 좋아하고 안 맞으면 싫어한다는 말."], ["경거망동", "경솔하여 생각 없이 망령되게 행동함. 또는 그런 행동."], ["고진감래", "쓴 것이 다하면 단 것이 온다는 뜻으로, 고생 끝에 즐거움이 옴을 이르는 말."], ["괄목상대", "눈을 비비고 상대편을 본다는 뜻으로, 남의 학식이나 재주가 놀랄 만큼 부쩍 는 것을 일컬음."], ["근묵자흑", "먹을 가까이하는 사람은 검어진다는 뜻으로, 나쁜 사람과 가까이 지내면 나쁜 버릇에 물들기 쉬움을 비유적으로 이르는 말."], ["기사회생", "거의 죽을 뻔하다가 도로 살아남."], ["노심초사", "몹시 마음을 쓰며 애를 태움."], ["독야청청", "남들이 모두 절개를 꺾는 상황 속에서도 홀로 절개를 굳세게 지키고 있음을 비유적으로 이르는 말."], ["동병상련", "같은 병을 앓는 사람끼리 서로 가엾게 여긴다는 뜻으로, 어려운 처지에 있는 사람끼리 서로 가엾게 여김을 이르는 말."], ["동분서주", "동쪽으로 뛰고 서쪽으로 뛴다는 뜻으로, 겉으로는 같이 행동하면서도 속으로는 각각 딴생각을 하고 있음을 이르는 말."], ["두문불출", "집에만 있고 바깥출입을 아니함."], ["두문불출", "집에서 은거하면서 관직에 나가지 아니하거나 사회의 일을 하지 아니함을 비유적으로 이르는 말."], ["만시지탄", "시기에 늦어 기회를 놓쳤음을 안타까워하는 탄식."], ["면종복배", "겉으로는 복종하는 체하면서 내심으로는 배반함."], ["방약무인", "곁에 사람이 없는 것처럼 아무 거리낌 없이 함부로 말하고 행동하는 태도가 있음."], ["부화뇌동", "줏대 없이 남의 의견에 따라 움직임."], ["비분강개", "슬프고 분하여 의분이 북받침."], ["사면초가", "아무에게도 도움을 받지 못하는, 외롭고 곤란한 지경에 빠진 형편을 이르는 말."], ["삼고초려", "인재를 맞아들이기 위하여 참을성 있게 노력함. 중국 삼국 시대에, 촉한의 유비가 난양에 은거하고 있던 제갈량의 초옥으로 세 번이나 찾아갔다는 데서 유래한다."], ["상전벽해", "뽕나무밭이 변하여 푸른 바다가 된다는 뜻으로, 세상일의 변천이 심함을 비유적으로 이르는 말."], ["수구초심", "여우가 죽을 때 머리를 자기가 살던 굴로 향한다는 뜻으로, 고향을 그리워하는 마음을 일컫는 말."], ["수주대토", "한 가지 일에만 얽매여 발전을 모르는 어리석은 사람을 비유적으로 이르는 말."], ["순망치한", "입술이 없으면 이가 시리다는 뜻으로, 서로 이해관계가 밀접한 사이에 어느 한쪽이 망하면 다른 한쪽도 그 영향을 받아 온전하기 어려움을 이르는 말."], ["안하무인", "눈 아래에 사람이 없다는 뜻으로, 방자하고 교만하여 다른 사람을 업신여김을 이르는 말."], ["연목구어", "나무에 올라가서 물고기를 구한다는 뜻으로, 도저히 불가능한 일을 굳이 하려 함을 비유적으로 이르는 말."], ["오리무중", "오 리나 되는 짙은 안개 속에 있다는 뜻으로, 무슨 일에 대하여 방향이나 갈피를 잡을 수 없음을 이르는 말."], ["유구무언", "입은 있어도 말은 없다는 뜻으로, 변명할 말이 없거나 변명을 못함을 이르는 말."], ["유유상종", "같은 무리끼리 서로 사귐."], ["이심전심", "마음과 마음으로 서로 뜻이 통함."], ["자가당착", "같은 사람의 말이나 행동이 앞뒤가 서로 맞지 아니하고 모순됨."], ["자승자박", "자신이 한 말과 행동에 자신이 구속되어 괴로움을 당함."], ["적반하장", "도둑이 도리어 매를 든다는 뜻으로, 잘못한 사람이 아무 잘못도 없는 사람을 나무람을 이르는 말."], ["전화위복", "재앙과 화난이 바뀌어 오히려 복이 됨."], ["절치부심", "몹시 분하여 이를 갈며 속을 썩임."], ["점입가경", "시간이 지날수록 하는 짓이나 몰골이 더욱 꼴불견임을 비유적으로 이르는 말."], ["조변석개", "아침저녁으로 뜯어고친다는 뜻으로, 계획이나 결정 따위를 일관성이 없이 자주 고침을 이르는 말."], ["중구난방", "뭇사람의 말을 막기가 어렵다는 뜻으로, 막기 어려울 정도로 여럿이 마구 지껄임을 이르는 말."], ["진퇴양난", "이러지도 저러지도 못하는 어려운 처지."], ["천우신조", "하늘과 신령의 도움."], ["청천벽력", "맑게 갠 하늘에서 치는 날벼락이라는 뜻으로, 뜻밖에 일어난 큰 변고나 사건을 비유적으로 이르는 말."], ["청출어람", "쪽에서 뽑아낸 푸른 물감이 쪽보다 더 푸르다는 뜻으로, 제자나 후배가 스승이나 선배보다 나음을 비유적으로 이르는 말."], ["침소봉대", "작은 일을 크게 불리어 떠벌림."], ["표리부동", "마음이 음흉하고 불량하여 겉과 속이 다름."], ["풍수지탄", "효도를 다하지 못한 채 어버이를 여읜 자식의 슬픔을 이르는 말."], ["허장성세", "실속이 없으면서 큰소리치거나 허세를 부림."], ["호가호위", "남의 권세를 빌려 위세를 부림. 여우가 호랑이의 위세를 빌려 호기를 부린다는 데에서 유래한다."], ["호구지책", "가난한 살림에서 그저 겨우 먹고 살아가는 방책."], ["혼비백산", "혼백이 어지러이 흩어진다는 뜻으로, 몹시 놀라 넋을 잃음을 이르는 말."], ["환골탈태", "뼈대를 바꾸어 끼고 태를 바꾸어 쓴다는 뜻으로, 고인의 시문의 형식을 바꾸어서 그 짜임새와 수법이 먼저 것보다 잘되게 함을 이르는 말."], ["환골탈태", "사람이 보다 나은 방향으로 변하여 전혀 딴사람처럼 됨."], ["후안무치", "뻔뻔스러워 부끄러움이 없음."]];
+const SUMMARY = {"가렴주구": "세금을 가혹하게 거두고 재물을 빼앗음.", "감탄고토": "자기에게 유리하면 좋아하고 불리하면 싫어함.", "고진감래": "고생 끝에 즐거움이 찾아옴.", "괄목상대": "남의 학식이나 재주가 놀랄 만큼 발전함.", "근묵자흑": "나쁜 사람과 가까이하면 나쁜 영향을 받음.", "독야청청": "어려운 상황에서도 홀로 절개를 지킴.", "동병상련": "같은 처지의 사람끼리 서로 동정함.", "동분서주": "이리저리 바쁘게 돌아다님.", "두문불출": "집 밖으로 나가지 않음.", "면종복배": "겉으로는 따르지만 속으로는 배반함.", "방약무인": "주변을 의식하지 않고 제멋대로 행동함.", "사면초가": "도움을 받을 곳 없이 곤란한 상황에 놓임.", "삼고초려": "인재를 얻기 위해 정성을 다해 찾아감.", "상전벽해": "세상이 몰라볼 정도로 크게 변함.", "수구초심": "고향을 그리워하는 마음.", "수주대토": "한 가지 생각에 얽매여 발전하지 못함.", "순망치한": "한쪽이 망하면 다른 쪽도 위태로워짐.", "안하무인": "남을 업신여기며 교만하게 행동함.", "연목구어": "불가능한 일을 억지로 하려 함.", "오리무중": "방향이나 상황을 알 수 없어 갈피를 잡지 못함.", "유구무언": "변명할 말이 없거나 하지 못함.", "자가당착": "말이나 행동이 앞뒤가 맞지 않음.", "자승자박": "자신의 말과 행동에 스스로 얽매임.", "적반하장": "잘못한 사람이 오히려 남을 탓함.", "청천벽력": "뜻밖에 일어난 큰 사건이나 변고.", "청출어람": "제자나 후배가 스승이나 선배보다 뛰어남.", "조변석개": "계획이나 결정을 일관성 없이 자주 바꿈.", "중구난방": "여러 사람이 제각각 떠들어 통일되지 않음.", "침소봉대": "작은 일을 크게 부풀려 말함.", "호가호위": "남의 권세를 빌려 위세를 부림.", "혼비백산": "몹시 놀라 정신을 잃을 정도가 됨.", "환골탈태": "이전과 전혀 다른 모습으로 새롭게 변함."};
+const uniqueMap = new Map();
+WORDS.forEach(([idiom,meaning])=>{if(!uniqueMap.has(idiom))uniqueMap.set(idiom,meaning)});
+const uniqueWords = [...uniqueMap.entries()];
+let summaryOn=false, quizMode="meaning", quizQuestions=[], currentIndex=0, correct=0, solved=0, wrongQuestions=[], currentChoices=[], answered=false;
+let gameScore=0, gameTime=60, gameActive=false, gameTimer=null, countdownTimer=null, selectedIdiom=null, selectedMeaning=null, idiomButtons=[], meaningButtons=[], boardIdioms=[], boardMeanings=[];
+const $=id=>document.getElementById(id);
+function page(id){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id))}
+function meaningText(text){if(!summaryOn)return text;const found=WORDS.find(([i,m])=>m===text);return found&&SUMMARY[found[0]]?SUMMARY[found[0]]:text}
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x}
+function sample(a,n){return shuffle(a).slice(0,n)}
+function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1800)}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const a=b.dataset.action;if(a==="home")goHome();if(a==="setup")showSetup();if(a==="quiz-meaning"){quizMode="meaning";showSetup()}if(a==="quiz-idiom"){quizMode="idiom";showSetup()}if(a==="matching")startMatching();if(a==="vocabulary")showVocabulary();if(a==="leave-game")leaveGame()});
+$("summaryToggle").addEventListener("click",()=>{summaryOn=!summaryOn;$("summaryToggle").classList.toggle("secondary",!summaryOn);$("summaryToggle").textContent=summaryOn?"요약 ON":"요약";if($("vocabulary").classList.contains("active"))showVocabulary();toast(summaryOn?"요약 기능이 활성화되었습니다.":"요약 기능이 비활성화되었습니다.")});
+function goHome(){stopGame();page("home")}
+function showSetup(){$("questionRange").value=10;$("rangeValue").textContent="10개";$("maxQuestions").textContent=WORDS.length+"개";$("questionRange").max=WORDS.length;page("setup")}
+$("questionRange").addEventListener("input",e=>$("rangeValue").textContent=e.target.value+"개");
+$("startQuiz").addEventListener("click",()=>{const n=+$("questionRange").value;beginQuiz(sample(WORDS,n))});
+function beginQuiz(qs){quizQuestions=qs;wrongQuestions=[];currentIndex=0;correct=0;solved=0;answered=false;page("quiz");showQuestion()}
+function showQuestion(){
+ if(currentIndex>=quizQuestions.length){finishQuiz();return}
+ const [idiom,meaning]=quizQuestions[currentIndex];
+ $("question").textContent=quizMode==="meaning"?idiom:meaningText(meaning);
+ $("progress").textContent=`${solved} / ${quizQuestions.length}`;$("correctCount").textContent=`${correct} / ${quizQuestions.length}`;
+ let choices;
+ if(quizMode==="meaning"){const others=[...new Set(WORDS.map(x=>x[1]).filter(x=>x!==meaning))];choices=sample(others,3).concat(meaning)}
+ else{const others=[...new Set(WORDS.map(x=>x[0]).filter(x=>x!==idiom))];choices=sample(others,3).concat(idiom)}
+ currentChoices=shuffle(choices);answered=false;$("choices").innerHTML="";
+ currentChoices.forEach((choice,index)=>{const b=document.createElement("button");b.className="choice";b.textContent=quizMode==="meaning"?meaningText(choice):choice;b.addEventListener("click",()=>answer(index));$("choices").appendChild(b)})
+}
+function answer(index){
+ if(answered)return;answered=true;const q=quizQuestions[currentIndex];const correctAnswer=quizMode==="meaning"?q[1]:q[0];const chosen=currentChoices[index];solved++;
+ if(chosen===correctAnswer)correct++;else wrongQuestions.push(q);
+ [...$("choices").children].forEach((b,i)=>{b.disabled=true;if(currentChoices[i]===correctAnswer)b.classList.add("correct");else if(i===index)b.classList.add("wrong")});
+ $("progress").textContent=`${solved} / ${quizQuestions.length}`;$("correctCount").textContent=`${correct} / ${quizQuestions.length}`;
+ setTimeout(()=>{currentIndex++;showQuestion()},650)
+}
+function finishQuiz(){$("resultScore").textContent=`${correct} / ${quizQuestions.length}`;$("retryWrong").hidden=wrongQuestions.length===0;page("result")}
+$("retryWrong").addEventListener("click",()=>{if(!wrongQuestions.length)return;const q=[...wrongQuestions];beginQuiz(q)});
+function showVocabulary(){const list=$("wordList");list.innerHTML="";WORDS.forEach(([i,m])=>{const card=document.createElement("article");card.className="word-card";const title=document.createElement("strong");title.textContent=i;const p=document.createElement("p");p.textContent=meaningText(m);card.append(title,p);list.appendChild(card)});page("vocabulary")}
+function startMatching(){
+ stopGame();gameScore=0;gameTime=60;gameActive=false;selectedIdiom=null;selectedMeaning=null;
+ $("score").textContent="0";$("time").textContent="60";$("gameStatus").textContent="";$("restartGame").hidden=true;
+ createBoard();page("matching");runCountdown()
+}
+function stopGame(){if(gameTimer)clearInterval(gameTimer);if(countdownTimer)clearInterval(countdownTimer);gameTimer=null;countdownTimer=null;gameActive=false;$("countOverlay").classList.remove("show")}
+function runCountdown(){
+ let n=3;$("countOverlay").textContent=n;$("countOverlay").classList.add("show");
+ countdownTimer=setInterval(()=>{n--;if(n>0){$("countOverlay").textContent=n}else{clearInterval(countdownTimer);countdownTimer=null;$("countOverlay").textContent="시작!";gameActive=true;gameTimer=setInterval(tick,1000);setTimeout(()=>$("countOverlay").classList.remove("show"),420)}},1000)
+}
+function tick(){gameTime--;$("time").textContent=gameTime;if(gameTime<=0)finishGame()}
+function createBoard(){
+ const chosen=sample(uniqueWords,5);boardIdioms=shuffle(chosen.map(x=>x[0]));
+ const correctMeanings=chosen.map(x=>x[1]);
+ let meanings;
+ do{meanings=sample([...new Set(uniqueWords.map(x=>x[1]))],5)}while(boardIdioms.filter(i=>meanings.includes(uniqueMap.get(i))).length<1||boardIdioms.filter(i=>meanings.includes(uniqueMap.get(i))).length>4);
+ boardMeanings=shuffle(meanings);renderBoard()
+}
+function renderBoard(){
+ $("idiomChoices").innerHTML="";$("meaningChoices").innerHTML="";idiomButtons=[];meaningButtons=[];
+ boardIdioms.forEach((v,i)=>{const b=document.createElement("button");b.className="match-btn";b.textContent=v;b.addEventListener("click",()=>selectIdiom(i));$("idiomChoices").appendChild(b);idiomButtons.push(b)});
+ boardMeanings.forEach((v,i)=>{const b=document.createElement("button");b.className="match-btn";b.textContent=meaningText(v);b.addEventListener("click",()=>selectMeaning(i));$("meaningChoices").appendChild(b);meaningButtons.push(b)})
+}
+function selectIdiom(i){if(!gameActive)return;if(selectedIdiom===i){selectedIdiom=null;renderSelection();return}selectedIdiom=i;renderSelection();checkPair()}
+function selectMeaning(i){if(!gameActive)return;if(selectedMeaning===i){selectedMeaning=null;renderSelection();return}selectedMeaning=i;renderSelection();checkPair()}
+function renderSelection(){idiomButtons.forEach((b,i)=>b.classList.toggle("selected",i===selectedIdiom));meaningButtons.forEach((b,i)=>b.classList.toggle("selected",i===selectedMeaning))}
+function checkPair(){
+ if(selectedIdiom===null||selectedMeaning===null)return;
+ const idiom=boardIdioms[selectedIdiom],meaning=boardMeanings[selectedMeaning];
+ const correctPair=uniqueMap.get(idiom)===meaning;
+ gameScore+=correctPair?20:-10;$("score").textContent=gameScore;showDelta(correctPair?20:-10);
+ refillSlots(selectedIdiom,selectedMeaning);
+ selectedIdiom=null;selectedMeaning=null;renderBoard()
+}
+function refillSlots(ii,mi){
+ const remainingI=boardIdioms.filter((_,i)=>i!==ii),remainingM=boardMeanings.filter((_,i)=>i!==mi);
+ const candidates=[];
+ for(const [newI,newM] of uniqueWords){
+  if(remainingI.includes(newI)||remainingM.includes(newM))continue;
+  if(!remainingM.includes(uniqueMap.get(newI)))continue;
+  const owner=uniqueWords.find(([i,m])=>m===newM)?.[0];
+  if(!owner||!remainingI.includes(owner))continue;
+  if(uniqueMap.get(newI)===newM)continue;
+  const testI=[...remainingI,newI],testM=[...remainingM,newM];
+  const count=testI.filter(i=>testM.includes(uniqueMap.get(i))).length;
+  if(count>=1&&count<=4)candidates.push([newI,newM])
+ }
+ if(candidates.length){
+  const [newI,newM]=candidates[Math.floor(Math.random()*candidates.length)];
+  boardIdioms[ii]=newI;boardMeanings[mi]=newM;return
+ }
+ createBoard()
+}
+function showDelta(n){const el=$("scoreDelta");el.textContent=n>0?`+[${n}]`:`-[${Math.abs(n)}]`;el.style.color=n>0?"var(--green)":"var(--dark)";el.classList.remove("show");void el.offsetWidth;el.classList.add("show")}
+$("restartGame").addEventListener("click",startMatching);
+function finishGame(){stopGame();$("time").textContent="0";$("gameStatus").textContent=`게임 종료! 최종 점수: ${gameScore}점`;$("restartGame").hidden=false}
+function leaveGame(){stopGame();goHome()}
+document.addEventListener("keydown",e=>{
+ if(e.key.toLowerCase()==="a"&&$("matching").classList.contains("active")){window.__abcStep=1;return}
+ if(window.__abcStep===1&&e.key.toLowerCase()==="b"){window.__abcStep=2;return}
+ if(window.__abcStep===2&&e.key.toLowerCase()==="c"){$("countOverlay").classList.remove("show");finishGame();window.__abcStep=0;return}
+ window.__abcStep=0
+});
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
